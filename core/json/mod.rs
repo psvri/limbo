@@ -90,7 +90,7 @@ pub fn json_array(values: &[OwnedValue]) -> crate::Result<OwnedValue> {
                 if t.subtype == TextSubtype::Json {
                     s.push_str(&t.value);
                 } else {
-                    match crate::json::to_string(&*t.value) {
+                    match crate::json::to_string(&t.value.as_ref().to_string()) {
                         Ok(json) => s.push_str(&json),
                         Err(_) => crate::bail_parse_error!("malformed JSON"),
                     }
@@ -162,7 +162,7 @@ pub fn json_extract(value: &OwnedValue, paths: &[OwnedValue]) -> crate::Result<O
     for path in paths {
         match path {
             OwnedValue::Text(p) => {
-                let extracted = json_extract_single(&json, p.value.as_str())?;
+                let extracted = json_extract_single(&json, p.value.as_ref())?;
 
                 if paths.len() == 1 && extracted == Val::Null {
                     return Ok(OwnedValue::Null);
@@ -375,7 +375,7 @@ mod tests {
 
         let result = json_array(&input).unwrap();
         if let OwnedValue::Text(res) = result {
-            assert_eq!(res.value.as_str(), "[\"value1\",\"value2\",1,1.1]");
+            assert_eq!(res.value.as_ref(), "[\"value1\",\"value2\",1,1.1]");
             assert_eq!(res.subtype, TextSubtype::Json);
         } else {
             panic!("Expected OwnedValue::Text");
@@ -388,7 +388,7 @@ mod tests {
 
         let result = json_array(&input).unwrap();
         if let OwnedValue::Text(res) = result {
-            assert_eq!(res.value.as_str(), "[]");
+            assert_eq!(res.value.as_ref(), "[]");
             assert_eq!(res.subtype, TextSubtype::Json);
         } else {
             panic!("Expected OwnedValue::Text");

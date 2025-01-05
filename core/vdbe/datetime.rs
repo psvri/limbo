@@ -839,7 +839,7 @@ mod tests {
         for (input, expected) in test_cases {
             let result = exec_time(&[input]);
             if let OwnedValue::Text(result_str) = result {
-                assert_eq!(result_str.value.as_str(), expected);
+                assert_eq!(result_str.value.as_ref(), expected);
             } else {
                 panic!("Expected OwnedValue::Text, but got: {:?}", result);
             }
