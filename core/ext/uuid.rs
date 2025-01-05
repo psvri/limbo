@@ -1,6 +1,6 @@
 use super::ExtFunc;
 use crate::{
-    types::{LimboText, OwnedValue},
+    types::{OwnedValue, Text},
     Database, LimboError,
 };
 use std::rc::Rc;
@@ -44,7 +44,7 @@ impl std::fmt::Display for UuidFunc {
 
 pub fn exec_uuid(var: &UuidFunc, sec: Option<&OwnedValue>) -> crate::Result<OwnedValue> {
     match var {
-        UuidFunc::Uuid4Str => Ok(OwnedValue::Text(LimboText::new(Rc::new(
+        UuidFunc::Uuid4Str => Ok(OwnedValue::Text(Text::new(Rc::new(
             Uuid::new_v4().to_string(),
         )))),
         UuidFunc::Uuid7 => {
@@ -75,12 +75,12 @@ pub fn exec_uuidstr(reg: &OwnedValue) -> crate::Result<OwnedValue> {
     match reg {
         OwnedValue::Blob(blob) => {
             let uuid = Uuid::from_slice(blob).map_err(|e| LimboError::ParseError(e.to_string()))?;
-            Ok(OwnedValue::Text(LimboText::new(Rc::new(uuid.to_string()))))
+            Ok(OwnedValue::Text(Text::new(Rc::new(uuid.to_string()))))
         }
         OwnedValue::Text(ref val) => {
             let uuid =
                 Uuid::parse_str(&val.value).map_err(|e| LimboError::ParseError(e.to_string()))?;
-            Ok(OwnedValue::Text(LimboText::new(Rc::new(uuid.to_string()))))
+            Ok(OwnedValue::Text(Text::new(Rc::new(uuid.to_string()))))
         }
         OwnedValue::Null => Ok(OwnedValue::Null),
         _ => Err(LimboError::ParseError(

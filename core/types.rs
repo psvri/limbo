@@ -34,12 +34,12 @@ pub enum TextSubtype {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct LimboText {
+pub struct Text {
     pub value: Rc<String>,
     pub subtype: TextSubtype,
 }
 
-impl LimboText {
+impl Text {
     pub fn new(value: Rc<String>) -> Self {
         Self {
             value,
@@ -60,7 +60,7 @@ pub enum OwnedValue {
     Null,
     Integer(i64),
     Float(f64),
-    Text(LimboText),
+    Text(Text),
     Blob(Rc<Vec<u8>>),
     Agg(Box<AggContext>), // TODO(pere): make this without Box. Currently this might cause cache miss but let's leave it for future analysis
     Record(OwnedRecord),
@@ -69,7 +69,7 @@ pub enum OwnedValue {
 impl OwnedValue {
     // A helper function that makes building a text OwnedValue easier.
     pub fn build_text(text: Rc<String>) -> Self {
-        Self::Text(LimboText::new(text))
+        Self::Text(Text::new(text))
     }
 }
 
@@ -669,7 +669,7 @@ mod tests {
     #[test]
     fn test_serialize_text() {
         let text = Rc::new("hello".to_string());
-        let record = OwnedRecord::new(vec![OwnedValue::Text(LimboText::new(text.clone()))]);
+        let record = OwnedRecord::new(vec![OwnedValue::Text(Text::new(text.clone()))]);
         let mut buf = Vec::new();
         record.serialize(&mut buf);
 
@@ -711,7 +711,7 @@ mod tests {
             OwnedValue::Null,
             OwnedValue::Integer(42),
             OwnedValue::Float(3.15),
-            OwnedValue::Text(LimboText::new(text.clone())),
+            OwnedValue::Text(Text::new(text.clone())),
         ]);
         let mut buf = Vec::new();
         record.serialize(&mut buf);
