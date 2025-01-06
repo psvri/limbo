@@ -11,7 +11,7 @@ pub enum Value<'a> {
     Null,
     Integer(i64),
     Float(f64),
-    Text(&'a String),
+    Text(&'a str),
     Blob(&'a Vec<u8>),
 }
 
@@ -34,22 +34,22 @@ pub enum TextSubtype {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct LimboText {
-    pub value: Rc<String>,
+pub struct Text {
+    pub value: Rc<str>,
     pub subtype: TextSubtype,
 }
 
-impl LimboText {
+impl Text {
     pub fn new(value: Rc<String>) -> Self {
         Self {
-            value,
+            value: Rc::from(value.as_str()),
             subtype: TextSubtype::Text,
         }
     }
 
     pub fn json(value: Rc<String>) -> Self {
         Self {
-            value,
+            value: Rc::from(value.as_str()),
             subtype: TextSubtype::Json,
         }
     }
@@ -60,7 +60,7 @@ pub enum OwnedValue {
     Null,
     Integer(i64),
     Float(f64),
-    Text(LimboText),
+    Text(Text),
     Blob(Rc<Vec<u8>>),
     Agg(Box<AggContext>), // TODO(pere): make this without Box. Currently this might cause cache miss but let's leave it for future analysis
     Record(OwnedRecord),
@@ -69,7 +69,19 @@ pub enum OwnedValue {
 impl OwnedValue {
     // A helper function that makes building a text OwnedValue easier.
     pub fn build_text(text: Rc<String>) -> Self {
-        Self::Text(LimboText::new(text))
+        Self::Text(Text::new(text))
+    }
+}
+
+impl From<Text> for OwnedValue {
+    fn from(value: Text) -> Self {
+        Self::Text(value)
+    }
+}
+
+impl From<&Text> for OwnedValue {
+    fn from(value: &Text) -> Self {
+        Self::Text(value.clone())
     }
 }
 
@@ -199,22 +211,22 @@ impl std::ops::Add<OwnedValue> for OwnedValue {
             (Self::Float(float_left), Self::Float(float_right)) => {
                 Self::Float(float_left + float_right)
             }
-            (Self::Text(string_left), Self::Text(string_right)) => Self::build_text(Rc::new(
-                string_left.value.to_string() + &string_right.value.to_string(),
-            )),
+            (Self::Text(string_left), Self::Text(string_right)) => {
+                Self::build_text(Rc::new(string_left.value.to_string() + &string_right.value))
+            }
             (Self::Text(string_left), Self::Integer(int_right)) => Self::build_text(Rc::new(
                 string_left.value.to_string() + &int_right.to_string(),
             )),
-            (Self::Integer(int_left), Self::Text(string_right)) => Self::build_text(Rc::new(
-                int_left.to_string() + &string_right.value.to_string(),
-            )),
+            (Self::Integer(int_left), Self::Text(string_right)) => {
+                Self::build_text(Rc::new(int_left.to_string() + &string_right.value))
+            }
             (Self::Text(string_left), Self::Float(float_right)) => {
                 let string_right = Self::Float(float_right).to_string();
                 Self::build_text(Rc::new(string_left.value.to_string() + &string_right))
             }
             (Self::Float(float_left), Self::Text(string_right)) => {
                 let string_left = Self::Float(float_left).to_string();
-                Self::build_text(Rc::new(string_left + &string_right.value.to_string()))
+                Self::build_text(Rc::new(string_left + &string_right.value))
             }
             (lhs, Self::Null) => lhs,
             (Self::Null, rhs) => rhs,
@@ -669,7 +681,7 @@ mod tests {
     #[test]
     fn test_serialize_text() {
         let text = Rc::new("hello".to_string());
-        let record = OwnedRecord::new(vec![OwnedValue::Text(LimboText::new(text.clone()))]);
+        let record = OwnedRecord::new(vec![OwnedValue::Text(Text::new(text.clone()))]);
         let mut buf = Vec::new();
         record.serialize(&mut buf);
 
@@ -711,7 +723,7 @@ mod tests {
             OwnedValue::Null,
             OwnedValue::Integer(42),
             OwnedValue::Float(3.15),
-            OwnedValue::Text(LimboText::new(text.clone())),
+            OwnedValue::Text(Text::new(text.clone())),
         ]);
         let mut buf = Vec::new();
         record.serialize(&mut buf);

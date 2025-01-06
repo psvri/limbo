@@ -8,7 +8,7 @@ use std::rc::Rc;
 pub use crate::json::de::from_str;
 use crate::json::json_path::{json_path, PathElement};
 pub use crate::json::ser::to_string;
-use crate::types::{LimboText, OwnedValue, TextSubtype};
+use crate::types::{OwnedValue, Text, TextSubtype};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
@@ -36,13 +36,13 @@ pub fn get_json(json_value: &OwnedValue) -> crate::Result<OwnedValue> {
             let json_val = get_json_value(json_value)?;
             let json = crate::json::to_string(&json_val).unwrap();
 
-            Ok(OwnedValue::Text(LimboText::json(Rc::new(json))))
+            Ok(OwnedValue::Text(Text::json(Rc::new(json))))
         }
         OwnedValue::Blob(b) => {
             // TODO: use get_json_value after we implement a single Struct
             //   to represent both JSON and JSONB
             if let Ok(json) = jsonb::from_slice(b) {
-                Ok(OwnedValue::Text(LimboText::json(Rc::new(json.to_string()))))
+                Ok(OwnedValue::Text(Text::json(Rc::new(json.to_string()))))
             } else {
                 crate::bail_parse_error!("malformed JSON");
             }
@@ -52,7 +52,7 @@ pub fn get_json(json_value: &OwnedValue) -> crate::Result<OwnedValue> {
             let json_val = get_json_value(json_value)?;
             let json = crate::json::to_string(&json_val).unwrap();
 
-            Ok(OwnedValue::Text(LimboText::json(Rc::new(json))))
+            Ok(OwnedValue::Text(Text::json(Rc::new(json))))
         }
     }
 }
@@ -90,7 +90,7 @@ pub fn json_array(values: &[OwnedValue]) -> crate::Result<OwnedValue> {
                 if t.subtype == TextSubtype::Json {
                     s.push_str(&t.value);
                 } else {
-                    match crate::json::to_string(&*t.value) {
+                    match crate::json::to_string(&t.value.as_ref().to_string()) {
                         Ok(json) => s.push_str(&json),
                         Err(_) => crate::bail_parse_error!("malformed JSON"),
                     }
@@ -114,7 +114,7 @@ pub fn json_array(values: &[OwnedValue]) -> crate::Result<OwnedValue> {
     }
 
     s.push(']');
-    Ok(OwnedValue::Text(LimboText::json(Rc::new(s))))
+    Ok(OwnedValue::Text(Text::json(Rc::new(s))))
 }
 
 pub fn json_array_length(
@@ -162,7 +162,7 @@ pub fn json_extract(value: &OwnedValue, paths: &[OwnedValue]) -> crate::Result<O
     for path in paths {
         match path {
             OwnedValue::Text(p) => {
-                let extracted = json_extract_single(&json, p.value.as_str())?;
+                let extracted = json_extract_single(&json, p.value.as_ref())?;
 
                 if paths.len() == 1 && extracted == Val::Null {
                     return Ok(OwnedValue::Null);
@@ -183,7 +183,7 @@ pub fn json_extract(value: &OwnedValue, paths: &[OwnedValue]) -> crate::Result<O
         result.push(']');
     }
 
-    Ok(OwnedValue::Text(LimboText::json(Rc::new(result))))
+    Ok(OwnedValue::Text(Text::json(Rc::new(result))))
 }
 
 fn json_extract_single(json: &Val, path: &str) -> crate::Result<Val> {
@@ -370,12 +370,12 @@ mod tests {
     #[test]
     fn test_json_array_simple() {
         let text = OwnedValue::build_text(Rc::new("value1".to_string()));
-        let json = OwnedValue::Text(LimboText::json(Rc::new("\"value2\"".to_string())));
+        let json = OwnedValue::Text(Text::json(Rc::new("\"value2\"".to_string())));
         let input = vec![text, json, OwnedValue::Integer(1), OwnedValue::Float(1.1)];
 
         let result = json_array(&input).unwrap();
         if let OwnedValue::Text(res) = result {
-            assert_eq!(res.value.as_str(), "[\"value1\",\"value2\",1,1.1]");
+            assert_eq!(res.value.as_ref(), "[\"value1\",\"value2\",1,1.1]");
             assert_eq!(res.subtype, TextSubtype::Json);
         } else {
             panic!("Expected OwnedValue::Text");
@@ -388,7 +388,7 @@ mod tests {
 
         let result = json_array(&input).unwrap();
         if let OwnedValue::Text(res) = result {
-            assert_eq!(res.value.as_str(), "[]");
+            assert_eq!(res.value.as_ref(), "[]");
             assert_eq!(res.subtype, TextSubtype::Json);
         } else {
             panic!("Expected OwnedValue::Text");

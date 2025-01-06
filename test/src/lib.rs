@@ -392,7 +392,7 @@ mod tests {
         Ok(())
     }
 
-    fn compare_string(a: &String, b: &String) {
+    fn compare_string(a: &str, b: &str) {
         assert_eq!(a.len(), b.len(), "Strings are not equal in size!");
         let a = a.as_bytes();
         let b = b.as_bytes();

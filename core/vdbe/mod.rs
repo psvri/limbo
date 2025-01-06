@@ -2072,9 +2072,9 @@ fn exec_concat_ws(registers: &[OwnedValue]) -> OwnedValue {
     }
 
     let separator = match &registers[0] {
-        OwnedValue::Text(text) => text.value.clone(),
-        OwnedValue::Integer(i) => Rc::new(i.to_string()),
-        OwnedValue::Float(f) => Rc::new(f.to_string()),
+        OwnedValue::Text(text) => text.value.as_ref().to_string(),
+        OwnedValue::Integer(i) => i.to_string(),
+        OwnedValue::Float(f) => f.to_string(),
         _ => return OwnedValue::Null,
     };
 
@@ -2426,7 +2426,7 @@ fn exec_instr(reg: &OwnedValue, pattern: &OwnedValue) -> OwnedValue {
 
     let reg_str;
     let reg = match reg {
-        OwnedValue::Text(s) => s.value.as_str(),
+        OwnedValue::Text(s) => s.value.as_ref(),
         _ => {
             reg_str = reg.to_string();
             reg_str.as_str()
@@ -2435,7 +2435,7 @@ fn exec_instr(reg: &OwnedValue, pattern: &OwnedValue) -> OwnedValue {
 
     let pattern_str;
     let pattern = match pattern {
-        OwnedValue::Text(s) => s.value.as_str(),
+        OwnedValue::Text(s) => s.value.as_ref(),
         _ => {
             pattern_str = pattern.to_string();
             pattern_str.as_str()
@@ -2717,12 +2717,12 @@ fn exec_replace(source: &OwnedValue, pattern: &OwnedValue, replacement: &OwnedVa
     match (&source, &pattern, &replacement) {
         (OwnedValue::Text(source), OwnedValue::Text(pattern), OwnedValue::Text(replacement)) => {
             if pattern.value.is_empty() {
-                return OwnedValue::build_text(source.value.clone());
+                return OwnedValue::from(source);
             }
 
             let result = source
                 .value
-                .replace(pattern.value.as_str(), &replacement.value);
+                .replace(pattern.value.as_ref(), &replacement.value);
             OwnedValue::build_text(Rc::new(result))
         }
         _ => unreachable!("text cast should never fail"),
