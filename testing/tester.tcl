@@ -50,6 +50,13 @@ proc do_execsql_test_on_specific_db {db_name test_name sql_statements expected_o
     run_test $::sqlite_exec $db_name $combined_sql $combined_expected_output
 }
 
+proc do_execsql_test_in_memory {test_name sql_statements expected_outputs} {
+    puts [format "Running test: %s" $test_name]
+    set combined_sql [string trim $sql_statements]
+    set combined_expected_output [join $expected_outputs "\n"]
+    run_test $::sqlite_exec {:memory:} $combined_sql $combined_expected_output
+}
+
 proc within_tolerance {actual expected tolerance} {
     expr {abs($actual - $expected) <= $tolerance}
 }

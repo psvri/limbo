@@ -1,3 +1,15 @@
 #!/usr/bin/env tclsh
 set testdir [file dirname $argv0]
 source $testdir/tester.tcl
+
+do_execsql_test_in_memory insert {
+    create table temp (t1 integer, primary key (t1));
+    insert into temp values (1);
+    insert into temp values (2.0);
+    insert into temp values ('3');
+    insert into temp values ('4.0');
+    select * from temp;
+} {1
+2
+3
+4}

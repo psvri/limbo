@@ -505,4 +505,48 @@ mod tests {
         do_flush(&conn, &tmp_db)?;
         Ok(())
     }
+
+    #[test]
+    fn test_must_be_int() -> anyhow::Result<()> {
+        let _ = env_logger::try_init();
+        let tmp_db = TempDatabase::new("CREATE TABLE temp (id INTEGER PRIMARY KEY);");
+        let conn = tmp_db.connect_limbo();
+
+        match conn.query("INSERT INTO temp VALUES (1),(2.0),('3'),('4.0');") {
+            Ok(Some(ref mut rows)) => loop {
+                match rows.next_row()? {
+                    StepResult::IO => {
+                        tmp_db.io.run_once()?;
+                    }
+                    StepResult::Done => break,
+                    _ => unreachable!(),
+                }
+            },
+            Ok(None) => {}
+            Err(err) => eprintln!("{}", err),
+        };
+
+        let mut row_output = 1;
+        match conn.query("SELECT * from temp;") {
+            Ok(Some(ref mut rows)) => loop {
+                match rows.next_row()? {
+                    StepResult::Row(row) => {
+                        assert_eq!(Value::Integer(row_output), row.values[0]);
+                        row_output += 1;
+                    }
+                    StepResult::IO => {
+                        tmp_db.io.run_once()?;
+                    }
+                    StepResult::Interrupt => break,
+                    StepResult::Done => break,
+                    StepResult::Busy => panic!("Database is busy"),
+                }
+            },
+            Ok(None) => {}
+            Err(err) => eprintln!("{}", err),
+        };
+
+        do_flush(&conn, &tmp_db)?;
+        Ok(())
+    }
 }
