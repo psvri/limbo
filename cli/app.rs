@@ -242,8 +242,12 @@ impl Limbo {
     fn handle_first_input(&mut self, cmd: &str) {
         if cmd.trim().starts_with('.') {
             self.handle_dot_command(cmd);
-        } else if let Err(e) = self.query(cmd) {
-            eprintln!("{}", e);
+        } else {
+            cmd.split(";").for_each(|stmt| {
+                if let Err(e) = self.query(stmt) {
+                    let _ = self.writeln(e.to_string());
+                }
+            });
         }
         std::process::exit(0);
     }
