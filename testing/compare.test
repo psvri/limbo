@@ -140,3 +140,69 @@ foreach {testnum lhs rhs ans} {
 } {
   do_execsql_test text-lte-$testnum.1 "SELECT $lhs <= $rhs" $::ans
 }
+
+foreach {testnum lhs rhs ans} {  
+    1   null    1     {}
+    2   1    null     {}
+    3   null  1.0     {}
+    4   1.0  null     {}
+    5   null  '1'     {}
+    6   '1'  null     {}
+} {
+  do_execsql_test null-eq-$testnum.1 "SELECT $lhs = $rhs" $::ans
+}
+
+foreach {testnum lhs rhs ans} {  
+    1   null    1     {}
+    2   1    null     {}
+    3   null  1.0     {}
+    4   1.0  null     {}
+    5   null  '1'     {}
+    6   '1'  null     {}
+} {
+  do_execsql_test null-neq-$testnum.1 "SELECT $lhs <> $rhs" $::ans
+}
+
+foreach {testnum lhs rhs ans} {  
+    1   null    1     {}
+    2   1    null     {}
+    3   null  1.0     {}
+    4   1.0  null     {}
+    5   null  '1'     {}
+    6   '1'  null     {}
+} {
+  do_execsql_test null-gt-$testnum.1 "SELECT $lhs > $rhs" $::ans
+}
+
+foreach {testnum lhs rhs ans} {  
+    1   null    1     {}
+    2   1    null     {}
+    3   null  1.0     {}
+    4   1.0  null     {}
+    5   null  '1'     {}
+    6   '1'  null     {}
+} {
+  do_execsql_test null-gte-$testnum.1 "SELECT $lhs >= $rhs" $::ans
+}
+
+foreach {testnum lhs rhs ans} {  
+    1   null    1     {}
+    2   1    null     {}
+    3   null  1.0     {}
+    4   1.0  null     {}
+    5   null  '1'     {}
+    6   '1'  null     {}
+} {
+  do_execsql_test null-lt-$testnum.1 "SELECT $lhs < $rhs" $::ans
+}
+
+foreach {testnum lhs rhs ans} {  
+    1   null    1     {}
+    2   1    null     {}
+    3   null  1.0     {}
+    4   1.0  null     {}
+    5   null  '1'     {}
+    6   '1'  null     {}
+} {
+  do_execsql_test null-lte-$testnum.1 "SELECT $lhs <= $rhs" $::ans
+}
