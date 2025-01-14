@@ -479,6 +479,7 @@ Feature support of [sqlite expr syntax](https://www.sqlite.org/lang_expr.html).
 | Variable       | No     |
 | VerifyCookie   | No     |
 | Yield          | Yes    |
+| ZeroOrNull     | Yes    |
 
 | LibSql Compatibility / Extensions |     |                                                               |
 |-----------------------------------|-----|---------------------------------------------------------------|

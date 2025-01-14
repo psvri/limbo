@@ -483,6 +483,13 @@ pub enum Insn {
         /// Jump to this PC if the register is null (P2).
         target_pc: BranchOffset,
     },
+    /// Check if either register is null.
+    ZeroOrNull {
+        /// Source register (P1).
+        rg1: usize,
+        rg2: usize,
+        dest: usize,
+    },
     ParseSchema {
         db: usize,
         where_clause: String,
